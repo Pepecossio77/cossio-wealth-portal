@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cossio Wealth Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0a0a0b; --bg2: #111113; --bg3: #18181b;
+  --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.12);
+  --gold: #c9a96e; --gold-dim: rgba(201,169,110,0.08);
+  --text: #f0ede8; --text2: #9a9690; --text3: #5a5854;
+  --green: #4ade80; --green-dim: rgba(74,222,128,0.12);
+  --red: #f87171;
+  --font-d: 'Cormorant Garamond', Georgia, serif;
+  --font-b: 'DM Sans', sans-serif;
+}
+body { background:var(--bg); color:var(--text); font-family:var(--font-b); font-size:14px; min-height:100vh; -webkit-font-smoothing:antialiased; }
+
+/* LOGIN */
+#login-screen { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:2rem; }
+.login-box { width:100%; max-width:380px; }
+.login-logo { text-align:center; margin-bottom:3rem; }
+.login-logo .wordmark { font-family:var(--font-d); font-size:32px; font-weight:300; letter-spacing:.08em; }
+.login-logo .divider { width:40px; height:1px; background:var(--gold); margin:12px auto; opacity:.5; }
+.login-logo .sub { font-size:11px; letter-spacing:.25em; text-transform:uppercase; color:var(--gold); }
+.login-box h2 { font-family:var(--font-d); font-size:20px; font-weight:400; color:var(--text2); text-align:center; margin-bottom:2rem; }
+.field { margin-bottom:1rem; }
+.field label { display:block; font-size:11px; letter-spacing:.15em; text-transform:uppercase; color:var(--text3); margin-bottom:6px; }
+.field input { width:100%; background:var(--bg3); border:.5px solid var(--border2); border-radius:6px; padding:12px 14px; color:var(--text); font-family:var(--font-b); font-size:14px; outline:none; transition:border-color .2s; }
+.field input:focus { border-color:var(--gold); }
+.login-btn { width:100%; background:var(--gold); border:none; border-radius:6px; padding:13px; color:#1a1400; font-family:var(--font-b); font-size:13px; font-weight:500; letter-spacing:.1em; text-transform:uppercase; cursor:pointer; margin-top:.5rem; transition:opacity .2s; }
+.login-btn:hover { opacity:.88; }
+.login-btn:disabled { opacity:.5; cursor:wait; }
+.login-error { color:var(--red); font-size:13px; text-align:center; margin-top:12px; min-height:20px; }
+.login-hint { text-align:center; font-size:12px; color:var(--text3); margin-top:2rem; }
+
+/* LOADING */
+#loading-screen { display:none; min-height:100vh; flex-direction:column; align-items:center; justify-content:center; gap:20px; }
+.spinner { width:32px; height:32px; border:2px solid var(--border2); border-top-color:var(--gold); border-radius:50%; animation:spin .8s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+.loading-text { font-size:13px; color:var(--text3); letter-spacing:.1em; }
+
+/* DASHBOARD */
+#dashboard { display:none; }
+.topbar { display:flex; align-items:center; justify-content:space-between; padding:18px 32px; border-bottom:.5px solid var(--border); }
+.topbar-logo .wordmark { font-family:var(--font-d); font-size:20px; font-weight:300; letter-spacing:.06em; }
+.topbar-logo .sub { font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:var(--gold); }
+.topbar-right { display:flex; align-items:center; gap:20px; }
+.update-badge { font-size:11px; color:var(--text3); }
+.update-badge span { color:var(--text2); }
+.client-name { font-size:13px; color:var(--text2); }
+.client-name strong { color:var(--text); font-weight:500; }
+.logout-btn { background:none; border:.5px solid var(--border2); border-radius:5px; padding:6px 12px; color:var(--text3); font-family:var(--font-b); font-size:12px; cursor:pointer; transition:all .2s; letter-spacing:.05em; }
+.logout-btn:hover { color:var(--text2); background:var(--bg3); }
+
+.main { padding:36px 32px; max-width:1100px; margin:0 auto; }
+.section-label { font-size:10px; letter-spacing:.25em; text-transform:uppercase; color:var(--gold); margin-bottom:16px; }
+
+/* Summary */
+.summary-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:1px; background:var(--border); border:.5px solid var(--border); border-radius:10px; overflow:hidden; margin-bottom:32px; }
+.summary-card { background:var(--bg2); padding:24px; }
+.summary-card .label { font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--text3); margin-bottom:10px; }
+.summary-card .value { font-family:var(--font-d); font-size:32px; font-weight:400; letter-spacing:-.01em; line-height:1; }
+.summary-card .value.green { color:var(--green); }
+.summary-card .value.gold { color:var(--gold); }
+.summary-card .sub-value { font-size:12px; color:var(--text3); margin-top:6px; }
+.badge-gain { display:inline-flex; align-items:center; font-size:12px; padding:3px 8px; border-radius:4px; margin-top:8px; font-weight:500; background:var(--green-dim); color:var(--green); }
+
+/* Goal */
+.goal-card { background:var(--bg2); border:.5px solid var(--border); border-left:2px solid var(--gold); border-radius:10px; padding:22px 24px; margin-bottom:32px; }
+.goal-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:16px; }
+.goal-label { font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--text3); margin-bottom:6px; }
+.goal-edit-link { color:var(--gold); font-size:10px; letter-spacing:.1em; cursor:pointer; text-transform:uppercase; margin-left:8px; }
+.goal-name { font-family:var(--font-d); font-size:22px; font-weight:400; }
+.goal-flag { font-size:24px; opacity:.7; }
+#goal-edit-area { display:none; margin-top:8px; }
+#goal-input { background:var(--bg3); border:.5px solid var(--gold); border-radius:5px; padding:8px 12px; color:var(--text); font-family:var(--font-d); font-size:18px; width:100%; outline:none; }
+.goal-edit-btns { display:flex; gap:8px; margin-top:8px; }
+.goal-save { background:var(--gold); border:none; border-radius:5px; padding:6px 16px; color:#1a1400; font-family:var(--font-b); font-size:12px; font-weight:500; cursor:pointer; letter-spacing:.08em; }
+.goal-cancel { background:none; border:.5px solid var(--border2); border-radius:5px; padding:6px 14px; color:var(--text3); font-family:var(--font-b); font-size:12px; cursor:pointer; }
+.progress-track { background:var(--bg3); border-radius:4px; height:5px; overflow:hidden; margin-bottom:10px; }
+.progress-fill { height:100%; background:var(--gold); border-radius:4px; transition:width 1.2s ease; }
+.progress-labels { display:flex; justify-content:space-between; font-size:12px; color:var(--text3); }
+.progress-labels .remaining { color:var(--gold); font-weight:500; }
+
+/* Charts */
+.charts-row { display:grid; grid-template-columns:2fr 1fr; gap:16px; margin-bottom:32px; }
+.chart-card { background:var(--bg2); border:.5px solid var(--border); border-radius:10px; padding:22px 24px; }
+.chart-title { font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:var(--text3); margin-bottom:20px; }
+.chart-wrap { position:relative; height:160px; }
+
+/* Products */
+.product-card { background:var(--bg2); border:.5px solid var(--border); border-radius:10px; padding:22px 24px; margin-bottom:10px; transition:border-color .2s; }
+.product-card:hover { border-color:var(--border2); }
+.product-name { font-family:var(--font-d); font-size:20px; font-weight:400; letter-spacing:.02em; }
+.product-type { font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--text3); margin-top:3px; margin-bottom:18px; }
+.product-metrics { display:flex; gap:32px; margin-bottom:20px; flex-wrap:wrap; }
+.metric-item .m-label { font-size:11px; color:var(--text3); letter-spacing:.08em; text-transform:uppercase; margin-bottom:4px; }
+.metric-item .m-value { font-family:var(--font-d); font-size:22px; font-weight:400; }
+.metric-item .m-value.green { color:var(--green); }
+.metric-item .m-value.gold { color:var(--gold); }
+.metric-item .m-value.red { color:var(--red); }
+.funds-label { font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--text3); margin-bottom:10px; }
+.funds-bar { display:flex; height:5px; border-radius:3px; overflow:hidden; gap:2px; margin-bottom:10px; }
+.funds-bar .seg { border-radius:2px; }
+.funds-legend { display:flex; flex-wrap:wrap; gap:12px; }
+.fund-item { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text2); }
+.fund-dot { width:8px; height:8px; border-radius:2px; flex-shrink:0; }
+.fund-pct { color:var(--text3); font-size:11px; }
+
+/* Footer */
+.portal-footer { border-top:.5px solid var(--border); padding:20px 32px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-top:16px; }
+.footer-brand { font-family:var(--font-d); font-size:14px; color:var(--text3); letter-spacing:.05em; }
+.footer-actions { display:flex; align-items:center; gap:10px; }
+.footer-btn { display:inline-flex; align-items:center; gap:6px; background:none; border:.5px solid var(--border2); border-radius:5px; padding:7px 13px; color:var(--text2); font-family:var(--font-b); font-size:12px; cursor:pointer; text-decoration:none; transition:all .2s; letter-spacing:.04em; white-space:nowrap; }
+.footer-btn:hover { background:var(--bg3); color:var(--text); }
+.footer-btn.gold-btn { border-color:rgba(201,169,110,.3); color:var(--gold); }
+.footer-btn.gold-btn:hover { background:var(--gold-dim); }
+.footer-legal { font-size:11px; color:var(--text3); margin-top:6px; width:100%; }
+.toast { position:fixed; bottom:32px; left:50%; transform:translateX(-50%); background:var(--bg3); border:.5px solid rgba(201,169,110,.3); border-radius:6px; padding:10px 18px; font-size:13px; color:var(--gold); opacity:0; pointer-events:none; transition:opacity .3s; white-space:nowrap; z-index:99; }
+.toast.show { opacity:1; }
+
+@keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+.animate { animation:fadeUp .4s ease both; }
+.d1{animation-delay:.05s} .d2{animation-delay:.10s} .d3{animation-delay:.15s} .d4{animation-delay:.20s} .d5{animation-delay:.25s}
+
+@media(max-width:640px){
+  .topbar{padding:14px 16px}
+  .update-badge{display:none}
+  .main{padding:24px 16px}
+  .charts-row{grid-template-columns:1fr}
+  .product-metrics{gap:16px}
+  .portal-footer{padding:16px}
+}
+</style>
+</head>
+<body>
+
+<!-- SHEETS URLs — actualiza aquí si cambian -->
+<script>
+const SHEET_URLS = {
+  clientes:  "https://docs.google.com/spreadsheets/d/e/2PACX-1vTt94EBvH0qKa8yKYLu4OC_biGMFNfMNNHAIGwznw1poLpIwTerPHp5FBZ8PWplMw/pub?gid=1985338599&single=true&output=csv",
+  productos: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTt94EBvH0qKa8yKYLu4OC_biGMFNfMNNHAIGwznw1poLpIwTerPHp5FBZ8PWplMw/pub?gid=578349486&single=true&output=csv",
+  fondos:    "https://docs.google.com/spreadsheets/d/e/2PACX-1vTt94EBvH0qKa8yKYLu4OC_biGMFNfMNNHAIGwznw1poLpIwTerPHp5FBZ8PWplMw/pub?gid=495694618&single=true&output=csv",
+  historico: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTt94EBvH0qKa8yKYLu4OC_biGMFNfMNNHAIGwznw1poLpIwTerPHp5FBZ8PWplMw/pub?gid=986743052&single=true&output=csv"
+};
+
+const ADVISOR = {
+  name: "José Cossio",
+  phone: "+50769XXXXXX",   // ← reemplaza con tu número real
+  email: "jose@eagleheadinvestment.com",
+  company: "Eagle Head Investment",
+  title: "Financial Advisor"
+};
+</script>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="wordmark">Cossio</div>
+      <div class="divider"></div>
+      <div class="sub">Wealth Portal</div>
+    </div>
+    <h2>Acceso privado</h2>
+    <div class="field">
+      <label>Usuario</label>
+      <input type="text" id="username" placeholder="su usuario" autocomplete="off" />
+    </div>
+    <div class="field">
+      <label>Contraseña</label>
+      <input type="password" id="password" placeholder="••••••••" />
+    </div>
+    <button class="login-btn" id="login-btn" onclick="doLogin()">Ingresar</button>
+    <div class="login-error" id="login-error"></div>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div id="loading-screen">
+  <div class="spinner"></div>
+  <div class="loading-text">Cargando su portafolio…</div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div class="wordmark">Cossio</div>
+      <div class="sub">Wealth Portal</div>
+    </div>
+    <div class="topbar-right">
+      <div class="update-badge">Actualizado <span id="last-update"></span></div>
+      <div class="client-name">Bienvenido, <strong id="display-name"></strong></div>
+      <button class="logout-btn" onclick="doLogout()">Salir</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="section-label animate">Resumen del portafolio</div>
+    <div class="summary-grid animate d1">
+      <div class="summary-card">
+        <div class="label">Valor total</div>
+        <div class="value green" id="total-value"></div>
+        <div class="sub-value">USD</div>
+      </div>
+      <div class="summary-card">
+        <div class="label">Monto aportado</div>
+        <div class="value" id="total-invested"></div>
+        <div class="sub-value">USD invertido</div>
+      </div>
+      <div class="summary-card">
+        <div class="label">Ganancia total</div>
+        <div class="value gold" id="total-gain"></div>
+        <div class="badge-gain" id="gain-badge"></div>
+      </div>
+      <div class="summary-card">
+        <div class="label">Crecimiento YTD</div>
+        <div class="value green" id="ytd-growth"></div>
+        <div class="sub-value">en lo que va del año</div>
+      </div>
+    </div>
+
+    <div class="section-label animate d2">Mi meta de inversión</div>
+    <div class="goal-card animate d2">
+      <div class="goal-header">
+        <div style="flex:1">
+          <div class="goal-label">Objetivo personal <span class="goal-edit-link" onclick="editGoal()">editar</span></div>
+          <div class="goal-name" id="goal-name"></div>
+          <div id="goal-edit-area">
+            <input id="goal-input" type="text" placeholder="Ej: Casa en Coronado · $300,000" />
+            <div class="goal-edit-btns">
+              <button class="goal-save" onclick="saveGoal()">Guardar</button>
+              <button class="goal-cancel" onclick="cancelGoal()">Cancelar</button>
+            </div>
+          </div>
+        </div>
+        <div class="goal-flag">⚑</div>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="goal-bar" style="width:0%"></div></div>
+      <div class="progress-labels">
+        <span id="goal-current"></span>
+        <span class="remaining" id="goal-remaining"></span>
+        <span id="goal-target"></span>
+      </div>
+    </div>
+
+    <div class="section-label animate d3">Comportamiento del portafolio</div>
+    <div class="charts-row animate d3">
+      <div class="chart-card">
+        <div class="chart-title">Valor total · últimos 12 meses</div>
+        <div class="chart-wrap"><canvas id="historyChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Composición actual</div>
+        <div class="chart-wrap"><canvas id="allocationChart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="section-label animate d4">Mis productos</div>
+    <div id="products-container" class="animate d4"></div>
+  </div>
+
+  <div class="portal-footer">
+    <div class="footer-brand">Cossio Wealth Portal · by José Cossio</div>
+    <div class="footer-actions">
+      <a href="#" class="footer-btn" onclick="openWhatsApp();return false;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        WhatsApp
+      </a>
+      <button class="footer-btn gold-btn" onclick="shareVCard()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Referir a un amigo
+      </button>
+      <button class="footer-btn" onclick="window.print()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Imprimir
+      </button>
+    </div>
+    <div class="footer-legal">Información confidencial · Solo para uso del titular de la cuenta</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CSV Parser ──────────────────────────────────────────────────
+function parseCSV(text) {
+  const lines = text.trim().split("\n");
+  // Skip banner row (row 1) and instruction row (row 2), headers are row 3
+  // But Google Sheets pub CSV starts from row 1 of the sheet
+  // Our sheets have: row1=banner, row2=instruction, row3=headers, row4+=data
+  const headerLine = lines[2]; // 0-indexed row 3
+  if (!headerLine) return [];
+  const headers = splitCSVRow(headerLine).map(h => h.trim().toLowerCase());
+  const rows = [];
+  for (let i = 3; i < lines.length; i++) {
+    const vals = splitCSVRow(lines[i]);
+    if (vals.every(v => !v.trim())) continue; // skip empty rows
+    const obj = {};
+    headers.forEach((h, idx) => { obj[h] = (vals[idx] || "").trim(); });
+    if (obj[headers[0]]) rows.push(obj); // skip if first col empty
+  }
+  return rows;
+}
+
+function splitCSVRow(line) {
+  const result = [];
+  let cur = "", inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"' && !inQ) { inQ = true; continue; }
+    if (ch === '"' && inQ) { if (line[i+1] === '"') { cur += '"'; i++; } else inQ = false; continue; }
+    if (ch === ',' && !inQ) { result.push(cur); cur = ""; continue; }
+    cur += ch;
+  }
+  result.push(cur);
+  return result;
+}
+
+async function fetchCSV(url) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("No se pudo cargar: " + url);
+  return res.text();
+}
+
+// ── State ──────────────────────────────────────────────────────
+let DB = { clientes:[], productos:[], fondos:[], historico:[] };
+let currentUser = null;
+let histChart = null, allocChart = null;
+
+// ── Helpers ────────────────────────────────────────────────────
+function fmt(n) {
+  return new Intl.NumberFormat("en-US", {minimumFractionDigits:0, maximumFractionDigits:0}).format(n);
+}
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 2800);
+}
+
+// ── Login ──────────────────────────────────────────────────────
+document.getElementById("password").addEventListener("keydown", e => {
+  if (e.key === "Enter") doLogin();
+});
+
+async function doLogin() {
+  const u = document.getElementById("username").value.trim().toLowerCase();
+  const p = document.getElementById("password").value;
+  const err = document.getElementById("login-error");
+  const btn = document.getElementById("login-btn");
+
+  if (!u || !p) { err.textContent = "Ingresa tu usuario y contraseña."; return; }
+
+  err.textContent = "";
+  btn.disabled = true;
+  btn.textContent = "Cargando…";
+
+  // Show loading
+  document.getElementById("login-screen").style.display = "none";
+  document.getElementById("loading-screen").style.display = "flex";
+
+  try {
+    // Load all sheets in parallel
+    const [cText, pText, fText, hText] = await Promise.all([
+      fetchCSV(SHEET_URLS.clientes),
+      fetchCSV(SHEET_URLS.productos),
+      fetchCSV(SHEET_URLS.fondos),
+      fetchCSV(SHEET_URLS.historico)
+    ]);
+
+    DB.clientes  = parseCSV(cText);
+    DB.productos = parseCSV(pText);
+    DB.fondos    = parseCSV(fText);
+    DB.historico = parseCSV(hText);
+
+    // Find client
+    const client = DB.clientes.find(c => c.usuario === u && c.password === p);
+    if (!client) {
+      document.getElementById("loading-screen").style.display = "none";
+      document.getElementById("login-screen").style.display = "flex";
+      err.textContent = "Usuario o contraseña incorrectos.";
+      btn.disabled = false; btn.textContent = "Ingresar";
+      return;
+    }
+
+    currentUser = u;
+    document.getElementById("loading-screen").style.display = "none";
+    showDashboard(client);
+
+  } catch(e) {
+    document.getElementById("loading-screen").style.display = "none";
+    document.getElementById("login-screen").style.display = "flex";
+    err.textContent = "Error al cargar datos. Verifica tu conexión.";
+    btn.disabled = false; btn.textContent = "Ingresar";
+    console.error(e);
+  }
+}
+
+function doLogout() {
+  currentUser = null;
+  document.getElementById("dashboard").style.display = "none";
+  document.getElementById("login-screen").style.display = "flex";
+  document.getElementById("login-screen").style.flexDirection = "";
+  document.getElementById("username").value = "";
+  document.getElementById("password").value = "";
+  document.getElementById("login-btn").disabled = false;
+  document.getElementById("login-btn").textContent = "Ingresar";
+  if (histChart)  { histChart.destroy();  histChart  = null; }
+  if (allocChart) { allocChart.destroy(); allocChart = null; }
+}
+
+// ── Dashboard ──────────────────────────────────────────────────
+function showDashboard(client) {
+  document.getElementById("dashboard").style.display = "block";
+
+  // Header
+  document.getElementById("last-update").textContent  = client.fecha_ult_actualizacion || "—";
+  document.getElementById("display-name").textContent = (client.nombre_completo || "").split(" ")[0];
+
+  // Products for this user
+  const myProducts = DB.productos.filter(p => p.usuario === currentUser);
+  const totalValue    = myProducts.reduce((s,p) => s + parseFloat(p.valor_actual_usd||0), 0);
+  const totalInvested = myProducts.reduce((s,p) => s + parseFloat(p.monto_invertido_usd||0), 0);
+  const totalGain     = totalValue - totalInvested;
+  const gainPct       = totalInvested > 0 ? ((totalGain / totalInvested)*100).toFixed(1) : "0.0";
+  const ytd           = parseFloat(client.ytd_pct||0);
+
+  document.getElementById("total-value").textContent    = "$" + fmt(totalValue);
+  document.getElementById("total-invested").textContent = "$" + fmt(totalInvested);
+  document.getElementById("total-gain").textContent     = (totalGain >= 0 ? "+" : "") + "$" + fmt(totalGain);
+  document.getElementById("ytd-growth").textContent     = (ytd >= 0 ? "+" : "") + (ytd*100).toFixed(1) + "%";
+  document.getElementById("gain-badge").textContent     = (gainPct >= 0 ? "+" : "") + gainPct + "% sobre aportado";
+
+  // Goal
+  const goalMeta    = parseFloat(client.objetivo_meta_usd||0);
+  const goalCurrent = parseFloat(client.objetivo_actual_usd||0) || totalValue;
+  const goalPct     = goalMeta > 0 ? Math.min(100,(goalCurrent/goalMeta)*100) : 0;
+  const savedGoal   = localStorage.getItem("cwp_goal_" + currentUser);
+  document.getElementById("goal-name").textContent    = savedGoal || client.objetivo_nombre || "Sin objetivo definido";
+  document.getElementById("goal-current").textContent = "$" + fmt(goalCurrent) + " alcanzado";
+  document.getElementById("goal-remaining").textContent = goalMeta > goalCurrent
+    ? "Faltan $" + fmt(goalMeta - goalCurrent) : "¡Meta alcanzada! 🎯";
+  document.getElementById("goal-target").textContent  = "Meta: $" + fmt(goalMeta);
+  setTimeout(() => {
+    document.getElementById("goal-bar").style.width = goalPct.toFixed(1) + "%";
+  }, 300);
+
+  // Render products
+  const container = document.getElementById("products-container");
+  container.innerHTML = "";
+  myProducts.forEach(prod => {
+    const val     = parseFloat(prod.valor_actual_usd||0);
+    const inv     = parseFloat(prod.monto_invertido_usd||0);
+    const gain    = val - inv;
+    const growPct = parseFloat(prod.crecimiento_pct||0);
+    const growPos = growPct >= 0;
+    const myFunds = DB.fondos.filter(f => f.usuario === currentUser && f.producto_nombre === prod.producto_nombre);
+
+    const div = document.createElement("div");
+    div.className = "product-card";
+    div.innerHTML = `
+      <div class="product-name">${prod.producto_nombre}</div>
+      <div class="product-type">${prod.producto_tipo}</div>
+      <div class="product-metrics">
+        <div class="metric-item">
+          <div class="m-label">Valor actual</div>
+          <div class="m-value green">$${fmt(val)}</div>
+        </div>
+        <div class="metric-item">
+          <div class="m-label">Aportado</div>
+          <div class="m-value">$${fmt(inv)}</div>
+        </div>
+        <div class="metric-item">
+          <div class="m-label">Ganancia</div>
+          <div class="m-value gold">${gain>=0?"+":""}$${fmt(gain)}</div>
+        </div>
+        <div class="metric-item">
+          <div class="m-label">Crecimiento</div>
+          <div class="m-value ${growPos?"green":"red"}">${growPos?"+":""}${(growPct*100).toFixed(1)}%</div>
+        </div>
+      </div>
+      ${myFunds.length ? `
+        <div class="funds-label">Composición por fondo</div>
+        <div class="funds-bar">${myFunds.map(f=>`<div class="seg" style="width:${(parseFloat(f.peso_pct||0)*100).toFixed(0)}%;background:${f.color_hex}"></div>`).join("")}</div>
+        <div class="funds-legend">${myFunds.map(f=>`<div class="fund-item"><div class="fund-dot" style="background:${f.color_hex}"></div><span>${f.fondo_nombre}</span><span class="fund-pct">${(parseFloat(f.peso_pct||0)*100).toFixed(0)}%</span></div>`).join("")}</div>
+      ` : ""}
+    `;
+    container.appendChild(div);
+  });
+
+  // Charts
+  const MONTHS_ES = ["Jun","Jul","Ago","Sep","Oct","Nov","Dic","Ene","Feb","Mar","Abr","May"];
+  const histRow   = DB.historico.find(h => h.usuario === currentUser);
+  let histValues  = [];
+  let histLabels  = [];
+
+  if (histRow) {
+    const keys = Object.keys(histRow).filter(k => k !== "usuario" && k !== "nombre_completo" && k !== "nombre");
+    keys.forEach((k, i) => {
+      const v = parseFloat((histRow[k]||"").replace(/[$,]/g,""));
+      if (!isNaN(v) && v > 0) {
+        histValues.push(v);
+        histLabels.push(MONTHS_ES[i] || k);
+      }
+    });
+  }
+
+  // Fund allocation donut (aggregate)
+  const fundMap = {}, fundColors = {};
+  myProducts.forEach(prod => {
+    const myFunds = DB.fondos.filter(f => f.usuario === currentUser && f.producto_nombre === prod.producto_nombre);
+    const val = parseFloat(prod.valor_actual_usd||0);
+    myFunds.forEach(f => {
+      const alloc = parseFloat(f.peso_pct||0) * val;
+      fundMap[f.fondo_nombre]   = (fundMap[f.fondo_nombre]||0) + alloc;
+      fundColors[f.fondo_nombre] = f.color_hex;
+    });
+  });
+  const fundNames  = Object.keys(fundMap);
+  const fundVals   = fundNames.map(n => Math.round(fundMap[n]));
+  const fundColArr = fundNames.map(n => fundColors[n]);
+
+  setTimeout(() => {
+    if (histValues.length > 1) {
+      const hCtx = document.getElementById("historyChart").getContext("2d");
+      histChart = new Chart(hCtx, {
+        type: "line",
+        data: {
+          labels: histLabels,
+          datasets: [{ data: histValues, borderColor:"#c9a96e", borderWidth:1.5,
+            pointBackgroundColor:"#c9a96e", pointRadius:2.5, pointHoverRadius:5,
+            tension:.4, fill:true, backgroundColor:"rgba(201,169,110,0.06)" }]
+        },
+        options: {
+          responsive:true, maintainAspectRatio:false,
+          plugins:{ legend:{display:false}, tooltip:{
+            callbacks:{ label: ctx => "$"+fmt(ctx.parsed.y)+" USD" },
+            backgroundColor:"#1a1a1d", borderColor:"rgba(201,169,110,.3)", borderWidth:.5,
+            titleColor:"#9a9690", bodyColor:"#f0ede8", padding:10
+          }},
+          scales:{
+            x:{ grid:{color:"rgba(255,255,255,.04)"}, ticks:{color:"#5a5854",font:{size:10,family:"DM Sans"}} },
+            y:{ grid:{color:"rgba(255,255,255,.04)"}, ticks:{color:"#5a5854",font:{size:10,family:"DM Sans"}, callback: v=>"$"+fmt(v)} }
+          }
+        }
+      });
+    } else {
+      document.getElementById("historyChart").parentElement.innerHTML =
+        '<div style="height:160px;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:12px;letter-spacing:.1em">Historial disponible el próximo mes</div>';
+    }
+
+    if (fundNames.length) {
+      const aCtx = document.getElementById("allocationChart").getContext("2d");
+      allocChart = new Chart(aCtx, {
+        type:"doughnut",
+        data:{ labels:fundNames, datasets:[{ data:fundVals, backgroundColor:fundColArr,
+          borderColor:"#111113", borderWidth:2, hoverBorderWidth:0 }] },
+        options:{
+          responsive:true, maintainAspectRatio:false, cutout:"68%",
+          plugins:{
+            legend:{ position:"bottom", labels:{color:"#9a9690",font:{size:10,family:"DM Sans"},
+              boxWidth:8, boxHeight:8, padding:8, usePointStyle:true}},
+            tooltip:{ callbacks:{ label: ctx => {
+              const total = ctx.dataset.data.reduce((a,b)=>a+b,0);
+              return "$"+fmt(ctx.parsed)+" · "+(ctx.parsed/total*100).toFixed(1)+"%";
+            }}, backgroundColor:"#1a1a1d", borderColor:"rgba(201,169,110,.3)",
+            borderWidth:.5, titleColor:"#9a9690", bodyColor:"#f0ede8", padding:10}
+          }
+        }
+      });
+    }
+  }, 80);
+}
+
+// ── Goal editing ───────────────────────────────────────────────
+function editGoal() {
+  document.getElementById("goal-input").value = document.getElementById("goal-name").textContent;
+  document.getElementById("goal-edit-area").style.display = "block";
+  document.getElementById("goal-name").style.display = "none";
+  document.getElementById("goal-input").focus();
+}
+function saveGoal() {
+  const val = document.getElementById("goal-input").value.trim();
+  if (!val) return;
+  document.getElementById("goal-name").textContent = val;
+  document.getElementById("goal-name").style.display = "block";
+  document.getElementById("goal-edit-area").style.display = "none";
+  if (currentUser) localStorage.setItem("cwp_goal_" + currentUser, val);
+}
+function cancelGoal() {
+  document.getElementById("goal-name").style.display = "block";
+  document.getElementById("goal-edit-area").style.display = "none";
+}
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") cancelGoal();
+  if (e.key === "Enter" && document.getElementById("goal-edit-area").style.display !== "none") saveGoal();
+});
+
+// ── Footer actions ─────────────────────────────────────────────
+function openWhatsApp() {
+  const msg = encodeURIComponent("Hola José, me gustaría hablar sobre mis inversiones.");
+  const phone = ADVISOR.phone.replace(/\D/g,"");
+  window.open("https://wa.me/" + phone + "?text=" + msg, "_blank");
+}
+function shareVCard() {
+  const vcard = ["BEGIN:VCARD","VERSION:3.0","FN:"+ADVISOR.name,"ORG:"+ADVISOR.company,
+    "TITLE:"+ADVISOR.title,"TEL;TYPE=CELL:"+ADVISOR.phone,"EMAIL:"+ADVISOR.email,
+    "NOTE:Cossio Wealth Portal","END:VCARD"].join("\n");
+  if (navigator.share) {
+    const file = new File([new Blob([vcard],{type:"text/vcard"})], "jose_cossio.vcf",{type:"text/vcard"});
+    navigator.share({ title:"José Cossio · Financial Advisor",
+      text:"Te comparto el contacto de mi asesor financiero.", files:[file] })
+      .catch(() => downloadVCard(vcard));
+  } else { downloadVCard(vcard); showToast("Contacto descargado · jose_cossio.vcf"); }
+}
+function downloadVCard(vcard) {
+  const a = Object.assign(document.createElement("a"), {
+    href: URL.createObjectURL(new Blob([vcard],{type:"text/vcard"})),
+    download: "jose_cossio.vcf"
+  });
+  a.click(); URL.revokeObjectURL(a.href);
+}
+</script>
+</body>
+</html>
