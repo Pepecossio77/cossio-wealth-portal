@@ -323,9 +323,16 @@ function splitCSVRow(line) {
 }
 
 async function fetchCSV(url) {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error("No se pudo cargar: " + url);
-  return res.text();
+  // Google Sheets CSV con proxy CORS
+  const proxy = "https://corsproxy.io/?" + encodeURIComponent(url);
+  try {
+    const res = await fetch(proxy);
+    if (res.ok) return res.text();
+  } catch(e) {}
+  // intento directo como fallback
+  const res2 = await fetch(url);
+  if (!res2.ok) throw new Error("No se pudo cargar datos.");
+  return res2.text();
 }
 
 // ── State ──────────────────────────────────────────────────────
